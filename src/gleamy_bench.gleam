@@ -111,14 +111,39 @@ fn repeat_until(duration: Float, value: a, fun: fn(a) -> b) {
   do_repeat_until([], now() +. duration, value, fun)
 }
 
-pub fn run(bench: Bench(a, b)) -> List(Set) {
+pub type Option {
+  WarmupTime(ms: Int)
+  BenchTime(ms: Int)
+}
+
+type Options {
+  Options(warmup_time: Int, bench_time: Int)
+}
+
+fn default_options() -> Options {
+  Options(warmup_time: 50, bench_time: 500)
+}
+
+fn apply_options(default: Options, options: List(Option)) -> Options {
+  case options {
+    [] -> default
+    [x, ..xs] ->
+      case x {
+        WarmupTime(ms) -> apply_options(Options(..default, warmup_time: ms), xs)
+        BenchTime(ms) -> apply_options(Options(..default, bench_time: ms), xs)
+      }
+  }
+}
+
+pub fn run(bench: Bench(a, b), options: List(Option)) -> List(Set) {
+  let options = apply_options(default_options(), options)
   use Input(input_label, input) <- list.flat_map(bench.inputs)
   use function <- list.map(bench.functions)
   case function {
     Function(fun_label, fun) -> {
       io.println("benching set " <> input_label <> " " <> fun_label)
-      let _warmup = repeat_until(10.0, input, fun)
-      let timings = repeat_until(500.0, input, fun)
+      let _warmup = repeat_until(int.to_float(options.warmup_time), input, fun)
+      let timings = repeat_until(int.to_float(options.bench_time), input, fun)
       Set(input_label, fun_label, timings)
     }
   }

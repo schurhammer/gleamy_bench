@@ -1,4 +1,4 @@
-import gleamy_bench.{Bench, Function, IPS, Input, Min, P, run, table}
+import gleamy_bench.{Bench, BenchTime, Function, IPS, Input, Min, P, run, table}
 import gleam/io
 
 fn fib1(n: Int) -> Int {
@@ -25,7 +25,7 @@ pub fn main() {
     [Input("n=5", 5), Input("n=10", 10), Input("n=15", 15)],
     [Function("fib1", fib1), Function("fib2", fib2)],
   )
-  |> run()
+  |> run([BenchTime(100)])
   |> table([IPS, Min, P(99)])
   |> io.println()
 }

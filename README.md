@@ -8,7 +8,7 @@ A library for benchmarking gleam code.
 # How To
 
 ```rust
-import gleamy_bench.{Bench, Function, IPS, Input, Min, P, run, table}
+import gleamy_bench.{Bench, BenchTime, Function, IPS, Input, Min, P, run, table}
 
 // ..
 
@@ -23,7 +23,7 @@ Bench(
         Function("fib2", fib2),
     ],
 )
-|> run()
+|> run([BenchTime(500)])
 |> table([IPS, Min, P(99)])
 |> io.println()
 
@@ -33,7 +33,7 @@ A benchmark is defined by giving a list of inputs and a list of functions to run
 
 The inputs should all be the same type, and the functions should all accept that type as the only argument. The return type of the function does not matter, only that they all return the same type.
 
-The `run` function actually runs the benchmark and collects the results.
+The `run` function actually runs the benchmark and collects the results. It accepts a list of options to change default behaviour, for example `BenchTime(100)` can be used to change how long each function is run repeatedly when collecting results (in milliseconds).
 
 The `table` function makes a table out of the results. You can choose the list of statistics you would like to include in the table.
 
