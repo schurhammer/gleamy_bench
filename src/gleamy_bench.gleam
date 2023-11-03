@@ -28,10 +28,6 @@ pub type Set {
   Set(input: String, function: String, reps: List(Float))
 }
 
-pub type Bench(a, b) {
-  Bench(inputs: List(Input(a)), functions: List(Function(a, b)))
-}
-
 pub type Stat {
   P(Int)
   IPS
@@ -112,16 +108,17 @@ fn repeat_until(duration: Float, value: a, fun: fn(a) -> b) {
 }
 
 pub type Option {
-  WarmupTime(ms: Int)
-  BenchTime(ms: Int)
+  Warmup(ms: Int)
+  Duration(ms: Int)
+  Quiet
 }
 
 type Options {
-  Options(warmup_time: Int, bench_time: Int)
+  Options(warmup: Int, duration: Int, quiet: Bool)
 }
 
 fn default_options() -> Options {
-  Options(warmup_time: 50, bench_time: 500)
+  Options(warmup: 50, duration: 500, quiet: False)
 }
 
 fn apply_options(default: Options, options: List(Option)) -> Options {
@@ -129,21 +126,31 @@ fn apply_options(default: Options, options: List(Option)) -> Options {
     [] -> default
     [x, ..xs] ->
       case x {
-        WarmupTime(ms) -> apply_options(Options(..default, warmup_time: ms), xs)
-        BenchTime(ms) -> apply_options(Options(..default, bench_time: ms), xs)
+        Warmup(ms) -> apply_options(Options(..default, warmup: ms), xs)
+        Duration(ms) -> apply_options(Options(..default, duration: ms), xs)
+        Quiet -> apply_options(Options(..default, quiet: True), xs)
       }
   }
 }
 
-pub fn run(bench: Bench(a, b), options: List(Option)) -> List(Set) {
+pub fn run(
+  inputs: List(Input(a)),
+  functions: List(Function(a, b)),
+  options: List(Option),
+) -> List(Set) {
   let options = apply_options(default_options(), options)
-  use Input(input_label, input) <- list.flat_map(bench.inputs)
-  use function <- list.map(bench.functions)
+  use Input(input_label, input) <- list.flat_map(inputs)
+  use function <- list.map(functions)
   case function {
     Function(fun_label, fun) -> {
-      io.println("benching set " <> input_label <> " " <> fun_label)
-      let _warmup = repeat_until(int.to_float(options.warmup_time), input, fun)
-      let timings = repeat_until(int.to_float(options.bench_time), input, fun)
+      case options.quiet {
+        True -> Nil
+        False -> {
+          io.println("benching set " <> input_label <> " " <> fun_label)
+        }
+      }
+      let _warmup = repeat_until(int.to_float(options.warmup), input, fun)
+      let timings = repeat_until(int.to_float(options.duration), input, fun)
       Set(input_label, fun_label, timings)
     }
   }

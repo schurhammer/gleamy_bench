@@ -1,31 +1,25 @@
-import gleamy_bench.{Bench, BenchTime, Function, IPS, Input, Min, P, run, table}
+import gleamy_bench as bench
 import gleam/io
+import gleam/int
+import gleam/list
 
-fn fib1(n: Int) -> Int {
-  case n {
-    0 -> 0
-    1 -> 1
-    n -> fib1(n - 1) + fib1(n - 2)
-  }
-}
-
-fn do_fib2(a, b, n) {
-  case n {
-    0 -> a
-    _ -> do_fib2(b, a + b, n - 1)
-  }
-}
-
-fn fib2(n: Int) -> Int {
-  do_fib2(0, 1, n)
+fn sort_int(data) {
+  list.sort(data, int.compare)
 }
 
 pub fn main() {
-  Bench(
-    [Input("n=5", 5), Input("n=10", 10), Input("n=15", 15)],
-    [Function("fib1", fib1), Function("fib2", fib2)],
+  bench.run(
+    [
+      bench.Input("pre-sorted list", list.range(1, 100_000)),
+      bench.Input(
+        "reversed list",
+        list.range(1, 100_000)
+        |> list.reverse,
+      ),
+    ],
+    [bench.Function("list.sort()", sort_int)],
+    [bench.Duration(1000), bench.Warmup(100)],
   )
-  |> run([BenchTime(100)])
-  |> table([IPS, Min, P(99)])
+  |> bench.table([bench.IPS, bench.Min, bench.P(99)])
   |> io.println()
 }
