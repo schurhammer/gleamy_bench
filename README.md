@@ -44,17 +44,9 @@ reversed list           list.sort()                    34.0101         27.0734  
 
 Suggestions and pull requests are welcome!
 
-## Quick start
-
-```sh
-gleam run   # Run the project
-gleam test  # Run the tests
-gleam shell # Run an Erlang shell
-```
-
 ## Installation
 
-If available on Hex this package can be added to your Gleam project:
+This package can be added to your Gleam project:
 
 ```sh
 gleam add gleamy_bench
