@@ -118,7 +118,7 @@ type Options {
 }
 
 fn default_options() -> Options {
-  Options(warmup: 50, duration: 500, quiet: False)
+  Options(warmup: 500, duration: 2000, quiet: False)
 }
 
 fn apply_options(default: Options, options: List(Option)) -> Options {
