@@ -7,10 +7,10 @@ A library for benchmarking gleam code.
 
 # How To
 
-```rust
+```gleam
 import gleamy/bench
 
-...
+// ...
 
 bench.run(
   [
@@ -22,7 +22,6 @@ bench.run(
 )
 |> bench.table([bench.IPS, bench.Min, bench.P(99)])
 |> io.println()
-
 ```
 
 A benchmark is defined by giving a list of inputs and a list of functions to run on those inputs. Each input + function combination will be timed.
