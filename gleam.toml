@@ -13,4 +13,4 @@ repository = { type = "github", user = "schurhammer", repo = "gleamy_bench" }
 gleam_stdlib = "~> 0.32"
 
 [dev-dependencies]
-gleeunit = "~> 0.10"
+gleeunit = "~> 1.0"
