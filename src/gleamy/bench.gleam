@@ -10,7 +10,7 @@ fn perf_counter(_resolution: Int) -> Int {
 }
 
 /// timestamp in milliseconds
-@external(javascript, "./gleamy_bench_ffi.mjs", "now")
+@external(javascript, "../gleamy_bench_ffi.mjs", "now")
 fn now() -> Float {
   let ns = perf_counter(1_000_000_000)
   int.to_float(ns) /. 1_000_000.0
@@ -49,13 +49,13 @@ fn standard_deviation(data: List(Float)) -> Float {
   let mean = mean(data)
   let assert Ok(value) =
     {
-      float.sum(list.map(
-        data,
-        fn(x) {
+      float.sum(
+        list.map(data, fn(x) {
           let y = x -. mean
           y *. y
-        },
-      )) /. count
+        }),
+      )
+      /. count
     }
     |> float.square_root()
   value
@@ -191,22 +191,19 @@ fn header_row(stats: List(Stat)) -> String {
   [
     string.pad_right("Input", name_pad, " "),
     string.pad_right("Function", name_pad, " "),
-    ..list.map(
-      stats,
-      fn(stat) {
-        let stat = case stat {
-          P(n) -> "P" <> int.to_string(n)
-          IPS -> "IPS"
-          Min -> "Min"
-          Max -> "Max"
-          Mean -> "Mean"
-          SD -> "SD"
-          SDPercent -> "SD%"
-          Stat(name, _) -> name
-        }
-        string.pad_left(stat, stat_pad, " ")
-      },
-    )
+    ..list.map(stats, fn(stat) {
+      let stat = case stat {
+        P(n) -> "P" <> int.to_string(n)
+        IPS -> "IPS"
+        Min -> "Min"
+        Max -> "Max"
+        Mean -> "Mean"
+        SD -> "SD"
+        SDPercent -> "SD%"
+        Stat(name, _) -> name
+      }
+      string.pad_left(stat, stat_pad, " ")
+    })
   ]
   |> string.join("\t")
 }
@@ -215,25 +212,22 @@ fn stat_row(set: Set, stats: List(Stat)) -> String {
   [
     string.pad_right(set.input, name_pad, " "),
     string.pad_right(set.function, name_pad, " "),
-    ..list.map(
-      stats,
-      fn(stat) {
-        let stat = case stat {
-          P(n) -> percentile(n, set.reps)
-          IPS ->
-            1000.0 *. int.to_float(list.length(set.reps)) /. float.sum(set.reps)
-          Min -> min(set.reps)
-          Max -> max(set.reps)
-          Mean -> mean(set.reps)
-          SD -> standard_deviation(set.reps)
-          SDPercent -> 100.0 *. standard_deviation(set.reps) /. mean(set.reps)
-          Stat(_, calc) -> calc(set)
-        }
-        stat
-        |> format_float(stat_decimal)
-        |> string.pad_left(stat_pad, " ")
-      },
-    )
+    ..list.map(stats, fn(stat) {
+      let stat = case stat {
+        P(n) -> percentile(n, set.reps)
+        IPS ->
+          1000.0 *. int.to_float(list.length(set.reps)) /. float.sum(set.reps)
+        Min -> min(set.reps)
+        Max -> max(set.reps)
+        Mean -> mean(set.reps)
+        SD -> standard_deviation(set.reps)
+        SDPercent -> 100.0 *. standard_deviation(set.reps) /. mean(set.reps)
+        Stat(_, calc) -> calc(set)
+      }
+      stat
+      |> format_float(stat_decimal)
+      |> string.pad_left(stat_pad, " ")
+    })
   ]
   |> string.join("\t")
 }
