@@ -1,12 +1,12 @@
-import gleam/int
 import gleam/float
+import gleam/int
+import gleam/io
 import gleam/list
 import gleam/string
-import gleam/io
 
 @external(erlang, "os", "perf_counter")
 fn perf_counter(_resolution: Int) -> Int {
-  panic("not implemented")
+  panic as "not implemented"
 }
 
 /// timestamp in milliseconds
