@@ -1,7 +1,7 @@
-import gleamy/bench
-import gleam/io
 import gleam/int
+import gleam/io
 import gleam/list
+import gleamy/bench
 
 fn sort_int(data) {
   list.sort(data, int.compare)
