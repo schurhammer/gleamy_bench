@@ -11,7 +11,7 @@ fn perf_counter(_resolution: Int) -> Int {
 
 /// timestamp in milliseconds
 @external(javascript, "../gleamy_bench_ffi.mjs", "now")
-fn now() -> Float {
+pub fn now() -> Float {
   let ns = perf_counter(1_000_000_000)
   int.to_float(ns) /. 1_000_000.0
 }
@@ -22,6 +22,7 @@ pub type Input(a) {
 
 pub type Function(a, b) {
   Function(label: String, function: fn(a) -> b)
+  SetupFunction(label: String, setup_function: fn(a) -> fn(a) -> b)
 }
 
 pub type Set {
@@ -110,15 +111,20 @@ fn repeat_until(duration: Float, value: a, fun: fn(a) -> b) {
 pub type Option {
   Warmup(ms: Int)
   Duration(ms: Int)
+  Decimals(n: Int)
   Quiet
 }
 
-type Options {
-  Options(warmup: Int, duration: Int, quiet: Bool)
+pub type Options {
+  Options(warmup: Int, duration: Int, decimals: Int, quiet: Bool)
+}
+
+pub type BenchResults {
+  BenchResults(options: Options, sets: List(Set))
 }
 
 fn default_options() -> Options {
-  Options(warmup: 500, duration: 2000, quiet: False)
+  Options(warmup: 500, duration: 2000, decimals: 4, quiet: False)
 }
 
 fn apply_options(default: Options, options: List(Option)) -> Options {
@@ -128,6 +134,7 @@ fn apply_options(default: Options, options: List(Option)) -> Options {
       case x {
         Warmup(ms) -> apply_options(Options(..default, warmup: ms), xs)
         Duration(ms) -> apply_options(Options(..default, duration: ms), xs)
+        Decimals(n) -> apply_options(Options(..default, decimals: n), xs)
         Quiet -> apply_options(Options(..default, quiet: True), xs)
       }
   }
@@ -137,23 +144,39 @@ pub fn run(
   inputs: List(Input(a)),
   functions: List(Function(a, b)),
   options: List(Option),
-) -> List(Set) {
+) -> BenchResults {
   let options = apply_options(default_options(), options)
-  use Input(input_label, input) <- list.flat_map(inputs)
-  use function <- list.map(functions)
-  case function {
-    Function(fun_label, fun) -> {
-      case options.quiet {
-        True -> Nil
-        False -> {
-          io.println("benching set " <> input_label <> " " <> fun_label)
+  let results =
+    list.flat_map(inputs, fn(input) {
+      let Input(input_label, input) = input
+      use function <- list.map(functions)
+      case function {
+        Function(fun_label, fun) -> {
+          case options.quiet {
+            True -> Nil
+            False -> {
+              io.println("benching set " <> input_label <> " " <> fun_label)
+            }
+          }
+          let _warmup = repeat_until(int.to_float(options.warmup), input, fun)
+          let timings = repeat_until(int.to_float(options.duration), input, fun)
+          Set(input_label, fun_label, timings)
+        }
+        SetupFunction(fun_label, setup_fun) -> {
+          case options.quiet {
+            True -> Nil
+            False -> {
+              io.println("benching set " <> input_label <> " " <> fun_label)
+            }
+          }
+          let fun = setup_fun(input)
+          let _warmup = repeat_until(int.to_float(options.warmup), input, fun)
+          let timings = repeat_until(int.to_float(options.duration), input, fun)
+          Set(input_label, fun_label, timings)
         }
       }
-      let _warmup = repeat_until(int.to_float(options.warmup), input, fun)
-      let timings = repeat_until(int.to_float(options.duration), input, fun)
-      Set(input_label, fun_label, timings)
-    }
-  }
+    })
+  BenchResults(options, results)
 }
 
 pub fn do_repeat(n: Int, input: a, fun: fn(a) -> b) {
@@ -173,8 +196,6 @@ pub fn repeat(n: Int, fun: fn(a) -> b) {
 const name_pad = 20
 
 const stat_pad = 14
-
-const stat_decimal = 4
 
 fn format_float(f: Float, decimals: Int) {
   let assert Ok(factor) = int.power(10, int.to_float(decimals))
@@ -205,10 +226,10 @@ fn header_row(stats: List(Stat)) -> String {
       string.pad_left(stat, stat_pad, " ")
     })
   ]
-  |> string.join("\t")
+  |> string.join("")
 }
 
-fn stat_row(set: Set, stats: List(Stat)) -> String {
+fn stat_row(set: Set, stats: List(Stat), options: Options) -> String {
   [
     string.pad_right(set.input, name_pad, " "),
     string.pad_right(set.function, name_pad, " "),
@@ -225,16 +246,16 @@ fn stat_row(set: Set, stats: List(Stat)) -> String {
         Stat(_, calc) -> calc(set)
       }
       stat
-      |> format_float(stat_decimal)
+      |> format_float(options.decimals)
       |> string.pad_left(stat_pad, " ")
     })
   ]
-  |> string.join("\t")
+  |> string.join("")
 }
 
-pub fn table(sets: List(Set), stats: List(Stat)) -> String {
+pub fn table(result: BenchResults, stats: List(Stat)) -> String {
   let header = header_row(stats)
-  let body = list.map(sets, stat_row(_, stats))
+  let body = list.map(result.sets, stat_row(_, stats, result.options))
   [header, ..body]
   |> string.join("\n")
 }

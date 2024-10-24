@@ -40,6 +40,46 @@ pre-sorted list         list.sort()                    37.8532         22.4190  
 reversed list           list.sort()                    34.0101         27.0734         31.0618
 ```
 
+## Function with additional setup
+
+Sometimes you need to do some additional setup before you can call your function, instead of having it called directly with the input data.
+For this use case you can use bench.SetupFunction
+
+`SetupFunction(label: String, setup_function: fn(a) -> fn(a) -> b)`
+
+The setup function is executed once at the start of the run, and should return the function that will be benchmarked.
+Both the setup function and the benchmark function will be passed the input data.
+
+For example, you might be testing the speed of a certain operation on a range of data structures.
+To do this you will need to create each data structure beforehand with the given input data so you can run the operation on it.
+
+```gleam
+bench.run(
+  [
+    bench.Input("100", list.range(1, 100)),
+    bench.Input("1000", list.reverse(list.range(1, 1000))),
+  ],
+  [
+    bench.SetupFunction("dict.get", fn(items) {
+      // This section will not be measured in the benchmark.
+      // We fill a dictionary with the input items to use later.
+      let d = list.fold(items, dict.new(), fn(d, i) {
+        dict.insert(d, i, i)
+      })m
+
+      // The returned function will be measured for the benchmark.
+      // It tries to "get" each item in the input from the dictionary.
+      fn(items) {
+        list.each(items, fn(i) { dict.get(d, i) })
+      }
+    })
+
+    // ...
+  ],
+  [bench.Duration(1000), bench.Warmup(100)],
+)
+```
+
 ## Contributing
 
 Suggestions and pull requests are welcome!
