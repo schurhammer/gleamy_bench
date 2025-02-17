@@ -202,16 +202,16 @@ fn format_float(f: Float, decimals: Int) {
   let whole = float.truncate(f)
   let decimal = float.truncate(f *. factor) - whole * float.truncate(factor)
   string.concat([
-    string.pad_left(int.to_string(whole), stat_pad - decimals - 1, " "),
+    string.pad_start(int.to_string(whole), stat_pad - decimals - 1, " "),
     ".",
-    string.pad_left(int.to_string(decimal), decimals, "0"),
+    string.pad_start(int.to_string(decimal), decimals, "0"),
   ])
 }
 
 fn header_row(stats: List(Stat)) -> String {
   [
-    string.pad_right("Input", name_pad, " "),
-    string.pad_right("Function", name_pad, " "),
+    string.pad_end("Input", name_pad, " "),
+    string.pad_end("Function", name_pad, " "),
     ..list.map(stats, fn(stat) {
       let stat = case stat {
         P(n) -> "P" <> int.to_string(n)
@@ -223,7 +223,7 @@ fn header_row(stats: List(Stat)) -> String {
         SDPercent -> "SD%"
         Stat(name, _) -> name
       }
-      string.pad_left(stat, stat_pad, " ")
+      string.pad_start(stat, stat_pad, " ")
     })
   ]
   |> string.join("")
@@ -231,8 +231,8 @@ fn header_row(stats: List(Stat)) -> String {
 
 fn stat_row(set: Set, stats: List(Stat), options: Options) -> String {
   [
-    string.pad_right(set.input, name_pad, " "),
-    string.pad_right(set.function, name_pad, " "),
+    string.pad_end(set.input, name_pad, " "),
+    string.pad_end(set.function, name_pad, " "),
     ..list.map(stats, fn(stat) {
       let stat = case stat {
         P(n) -> percentile(n, set.reps)
@@ -247,7 +247,7 @@ fn stat_row(set: Set, stats: List(Stat), options: Options) -> String {
       }
       stat
       |> format_float(options.decimals)
-      |> string.pad_left(stat_pad, " ")
+      |> string.pad_start(stat_pad, " ")
     })
   ]
   |> string.join("")
