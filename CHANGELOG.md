@@ -1,6 +1,15 @@
 # Changelog
 
-# v0.3.0 2023.12.05
+## v0.6.0
+
+- upgrade to stdlib version
+- move example to test directory
+
+## v0.5.0
+
+- add SetupFunction feature
+
+## v0.3.0
 
 - Change import structure from `import gleamy_bench` to `import gleamy/bench`
 - Increase default benchmark duration to 2000ms, warmup to 500ms.
