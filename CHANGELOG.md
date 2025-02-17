@@ -2,7 +2,7 @@
 
 ## v0.6.0
 
-- upgrade to stdlib version
+- upgrade stdlib version
 - move example to test directory
 
 ## v0.5.0

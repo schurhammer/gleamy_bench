@@ -65,7 +65,7 @@ bench.run(
       // We fill a dictionary with the input items to use later.
       let d = list.fold(items, dict.new(), fn(d, i) {
         dict.insert(d, i, i)
-      })m
+      })
 
       // The returned function will be measured for the benchmark.
       // It tries to "get" each item in the input from the dictionary.
